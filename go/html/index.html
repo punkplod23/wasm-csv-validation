@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Go WebAssembly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go = new Go(); // Defined in wasm_exec.js
+        WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+            go.run(result.instance);
+            document.getElementById("addButton").addEventListener("click", () => {
+                const fileInput = document.getElementById("fileInput");
+                if (fileInput.files.length === 0) {
+                    alert("Please select a CSV file.");
+                    return;
+                }
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const csvContent = event.target.result;
+                    try {
+                        // Call the Go function to validate the CSV
+                        const result = validateCSV(csvContent);
+                        alert(result);
+                    } catch (err) {
+                        console.error("Error validating CSV:", err);
+                        alert("Error validating CSV: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }).catch((err) => {
+            console.error("Error instantiating WebAssembly module:", err);
+        });
+
+    </script>
+</head>
+<body>
+    <h1>WebAssembly</h1>
+    <form>
+        <input type="file" id="fileInput" accept=".csv" /><br /><br />
+        <button type="button" id="addButton">Validate CSV</button><br /><br />
+   </form>
+</body>
+</html>
